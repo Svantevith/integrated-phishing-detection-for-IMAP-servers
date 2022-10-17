@@ -45,7 +45,7 @@ class NamedTransformer(ColumnTransformer):
         """
         return list(chain(*[cols for _,_,cols in self.transformers]))
     
-    def to_frame(self, data: np.ndarray) -> pd.DataFrame:
+    def to_frame(self, data) -> pd.DataFrame:
         """
         Convert array-like input into a pandas DataFrame.
 
@@ -80,7 +80,7 @@ class NamedTransformer(ColumnTransformer):
         """
         return super().fit(X, y)
 
-    def transform(self, X) -> pd.DataFrame:
+    def transform(self, X):
         """
         Transform X by converting array-like input into a pandas DataFrame.
 
@@ -96,7 +96,7 @@ class NamedTransformer(ColumnTransformer):
         """
         return self.to_frame(super().transform(X))
 
-    def fit_transform(self, X, y = None) -> pd.DataFrame:
+    def fit_transform(self, X, y = None):
         """
         Fit and transform the transformer using X.
 

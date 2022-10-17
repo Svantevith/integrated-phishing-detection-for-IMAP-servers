@@ -47,7 +47,7 @@ class AttributeDropout(BaseEstimator, TransformerMixin):
         super(AttributeDropout, self).__init__()
         self.exclude = exclude
     
-    def fit(self, X , y=None):
+    def fit(self, X: pd.DataFrame , y=None):
         """
         Fit the transformer using X (placeholder).
 

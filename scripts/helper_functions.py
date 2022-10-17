@@ -2,7 +2,7 @@ import os
 import re
 import mailbox
 import email.header
-from typing import Generator, List, Dict
+from typing import Generator, List
 from classes.MboxParser import MboxParser
 
 """
