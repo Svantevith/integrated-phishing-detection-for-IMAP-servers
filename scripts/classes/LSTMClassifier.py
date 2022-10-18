@@ -1,7 +1,6 @@
 import tensorflow as tf
 from keras import Model
 from keras.layers import Dense, Embedding, LSTM, SpatialDropout1D, TextVectorization, Input, Dropout
-from typing import Union
 
 class LSTMClassifier(Model):
     """
@@ -187,7 +186,7 @@ class LSTMClassifier(Model):
         x = self.input_layer
         return Model(inputs=x, outputs=self.call(x))
 
-    def compute_vocabulary(self, text_data, batch_size: Union[int, None] = None, steps: Union[int, None] = None) -> None:
+    def compute_vocabulary(self, text_data, batch_size: int = None, steps: int = None) -> None:
         """
         Computes a vocabulary of string terms from tokens in a dataset.
 

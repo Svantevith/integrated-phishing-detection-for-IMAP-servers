@@ -67,7 +67,7 @@ class PhishyMatcher:
         """
         return [ip for ip in re.findall(self.IP_regex, self.clean_text(text)) if self.is_valid_IP(ip)]
     
-    def extract_URLs_from_text(self, text: str) -> list:
+    def extract_URLs_from_text(self, text: str) -> List[str]:
         """
         Find URL addresses within the provided text.
 
