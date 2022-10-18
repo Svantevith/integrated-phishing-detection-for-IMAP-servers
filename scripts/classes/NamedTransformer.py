@@ -1,3 +1,4 @@
+from __future__ import annotations
 import pandas as pd
 import numpy as np
 from itertools import chain
@@ -61,14 +62,14 @@ class NamedTransformer(ColumnTransformer):
         """
         return pd.DataFrame(data, columns=self.features_in)
     
-    def fit(self, X, y = None):
+    def fit(self, X: np.ndarray, y = None) -> NamedTransformer:
         """
         Fit the transformer using X.
         ColumnTransformer-derived objects ignore the y parameter.
 
         Parameters
         ----------
-        X : {array-like, pd.DataFrame} of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Input data, of which specified subsets are used to fit the transformers.
         y : None, optional
             Ignored.
@@ -80,14 +81,14 @@ class NamedTransformer(ColumnTransformer):
         """
         return super().fit(X, y)
 
-    def transform(self, X) -> pd.DataFrame:
+    def transform(self, X: np.ndarray) -> pd.DataFrame:
         """
         Transform X by converting array-like input into a pandas DataFrame.
 
         Parameters
         ----------
-        X : {array-like, pd.DataFrame} of shape (n_samples, n_features)
-            Input data, of which specified subsets are used to fit the transformers.
+        X : array-like of shape (n_samples, n_features)
+            Input data to be transformed.
         
         Returns
         -------
@@ -96,20 +97,20 @@ class NamedTransformer(ColumnTransformer):
         """
         return self.to_frame(super().transform(X))
 
-    def fit_transform(self, X, y = None) -> pd.DataFrame:
+    def fit_transform(self, X: np.ndarray, y = None) -> pd.DataFrame:
         """
         Fit and transform the transformer using X.
 
         Parameters
         ----------
-        X : {array-like, pd.DataFrame} (n_samples, n_features)
-            Input data, of which specified subsets are used to fit the transformers.
+        X : array-like of shape (n_samples, n_features)
+            Input data to be transformed.
         y : None, optional
             Ignored.
         
         Returns
         -------
-        self : NamedTransformer
-            This estimator.
+        X_t : pd.DataFrame
+            Converted pandas DataFrame.
         """
         return self.to_frame(super().fit_transform(X))

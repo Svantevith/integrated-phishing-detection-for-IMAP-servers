@@ -1,6 +1,8 @@
 import tensorflow as tf
+from tensorflow.python.framework.ops import EagerTensor
 from keras import Model
 from keras.layers import Dense, Embedding, LSTM, SpatialDropout1D, TextVectorization, Input, Dropout
+from keras.engine.functional import Functional
 
 class LSTMClassifier(Model):
     """
@@ -47,7 +49,7 @@ class LSTMClassifier(Model):
         Return boolean flag indicating MIME content-type presence. 
     """ 
     
-    def __init__(self, n_classes: int = 2, vocab_size: int = 50000, max_seq_len: int = 250, embed_dim: int = 100, n_grams: int = 2):
+    def __init__(self, n_classes: int = 2, vocab_size: int = 50000, max_seq_len: int = 250, embed_dim: int = 100, n_grams: int = 2) -> None:
         """
         Constructs all the necessary attributes for the custom Model object.
 
@@ -112,7 +114,7 @@ class LSTMClassifier(Model):
             name='outputs'
         )
     
-    def call(self, inputs):
+    def call(self, inputs) -> EagerTensor:
         """
         Build a new computational graph from the provided inputs and return the outputs as tensors.
 
@@ -157,7 +159,7 @@ class LSTMClassifier(Model):
         # The output Dense layer with a softmax activation function returns prediction probability for each category.
         return self.classifier(x)
 
-    def build_graph(self):
+    def build_graph(self) -> Functional:
         """
         Helper function to get and plot the model summary information conveniently.
         Graphs are used by tf.functions to represent the function's computations. Each graph contains:

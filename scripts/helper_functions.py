@@ -2,7 +2,7 @@ import os
 import re
 import mailbox
 import email.header
-from typing import Generator, List, Dict
+from typing import Generator, List, Dict, Any
 from classes.MboxParser import MboxParser
 
 """
@@ -27,7 +27,7 @@ def get_newest_directory(root_dir: str) -> str:
 
 def parse_data_from_mbox(
     mbox_path: str, is_phishy: bool
-) -> Generator[dict, None, None]:
+) -> Generator[Dict[str, Any], None, None]:
     """
     Generator yielding dictionaries containing data parsed from the mbox file.
     
@@ -40,7 +40,7 @@ def parse_data_from_mbox(
 
     Yields
     ------
-    data : Dict[str, Sequence]
+    data : Dict[str, Any]
         Dictionary storing data parsed from the mbox file.
     
     Usage
@@ -88,3 +88,31 @@ def parse_uid(response: List[bytes]) -> str:
     uid = response[0].decode("utf-8") 
     match = re.compile(r'\d+ \(UID (?P<uid>\d+)\)').match(uid)
     return match.group('uid') if match else ''
+
+def parse_mailboxes(response: List[bytes]) -> List[str]:
+    """
+    Parse mailbox names from the IMAP server response.
+    
+    Parameters
+    ----------
+    response : bytearray
+        Response bytearray from the IMAP server.
+    
+    Returns
+    -------
+    mailboxes : List[str]
+        List of parsed mailbox names.
+    """ 
+    return [mail_box.decode().split(' "/" ')[1].strip('"') for mail_box in response]
+
+def preview_mailtree(mail_tree: List[str]) -> None:
+    """
+    Preview mail tree in the console.
+
+    Parameters
+    ----------
+    mail_tree : List[str]
+        List of mailboxes on the IMAP server.
+    """
+    for i, mail_box in enumerate(mail_tree, start=1):
+        print(f" {i}. {mail_box.split('/')[-1]}")

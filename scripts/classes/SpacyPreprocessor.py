@@ -1,3 +1,4 @@
+from __future__ import annotations
 import re
 import spacy
 import pandas as pd
@@ -46,7 +47,7 @@ class SpacyPreprocessor(BaseEstimator, TransformerMixin):
     -----
     Add either as a step in sklearn.pipe.Pipeline, or as a transformer in sklearn.compose.ColumnTransformer.
     """
-    def __init__(self, mode: str = 'all', min_length: int = 0, keep_stop: bool = False):
+    def __init__(self, mode: str = 'all', min_length: int = 0, keep_stop: bool = False) -> None:
         """
         Constructs all the necessary attributes for the custom transformer object.
 
@@ -74,7 +75,7 @@ class SpacyPreprocessor(BaseEstimator, TransformerMixin):
         self.keep_stop = keep_stop
 
 
-    def fit(self, X: pd.DataFrame, y=None):
+    def fit(self, X: pd.DataFrame, y=None) -> SpacyPreprocessor:
         """
         Fit the transformer using X (placeholder).
 
@@ -92,14 +93,14 @@ class SpacyPreprocessor(BaseEstimator, TransformerMixin):
         """
         return self
         
-    def transform(self, X: pd.DataFrame, y=None):
+    def transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:
         """
         Transform X by applying preprocess_corpus function.
 
         Parameters
         ----------
         X : pd.DataFrame of shape (n_samples, n_features)
-            Input data, of which specified subsets are used to fit the transformers.
+            Input data to be transformed.
         
         Returns
         -------

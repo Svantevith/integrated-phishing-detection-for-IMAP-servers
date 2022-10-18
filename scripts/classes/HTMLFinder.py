@@ -35,7 +35,7 @@ class HTMLFinder(HTMLParser):
     contains_content_type(content_type)
         Return boolean flag indicating MIME content-type presence. 
     """ 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Constructs all the necessary attributes for the custom HTMLParser object.
         """

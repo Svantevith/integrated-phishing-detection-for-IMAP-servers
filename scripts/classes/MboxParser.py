@@ -1,9 +1,9 @@
 import mailbox
 import re
 import bs4
-import email.message
+from email.message import Message
 import warnings
-from typing import Union, Dict, List, Tuple, Sequence, Generator
+from typing import Union, Dict, List, Tuple, Any, Generator
 from classes.PhishyMatcher import PhishyMatcher
 from classes.HTMLFinder import HTMLFinder
 
@@ -39,9 +39,9 @@ class MboxParser(PhishyMatcher, HTMLFinder):
     """
 
     # Type hinting for email message
-    EmailMessage = Union[email.message.Message, str]
+    EmailMessage = Union[Message, str]
     # Type hinting for email payload
-    EmailPayload = List[EmailMessage] 
+    EmailPayload = List[Message] 
     # Type hinting for email data (Content-Type, Content-Encoding, Content-Disposition, Filename, Text)
     EmailData = Tuple[str, str, str, str, str]
 
@@ -66,14 +66,14 @@ class MboxParser(PhishyMatcher, HTMLFinder):
         self.email_data = email_data
 
     @property
-    def parsed_email_data(self) -> Dict[str, Sequence]:
+    def parsed_email_data(self) -> Dict[str, Any]:
         """
         Dictionary storing parsed email data.
 
         Returns
         -------
-        parsed_email_data : Dict[str, Sequence]
-            Dictionary, providing keyed-access to single-dimensional, array-like sequences.
+        parsed_email_data : Dict[str, Any]
+            Dictionary, providing keyed-access to email message attributes.
         """
         parsed_data = {
             **{k: self.email_data.get(k, '') for k in self.keys},

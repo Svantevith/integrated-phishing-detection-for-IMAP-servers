@@ -1,3 +1,4 @@
+from __future__ import annotations
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from typing import List
@@ -35,7 +36,7 @@ class AttributeDropout(BaseEstimator, TransformerMixin):
     ])
     """ 
 
-    def __init__(self, exclude: List[str]):
+    def __init__(self, exclude: List[str]) -> None:
         """
         Constructs all the necessary attributes for the custom transformer object.
 
@@ -47,7 +48,7 @@ class AttributeDropout(BaseEstimator, TransformerMixin):
         super(AttributeDropout, self).__init__()
         self.exclude = exclude
     
-    def fit(self, X , y=None):
+    def fit(self, X: pd.DataFrame , y=None) -> AttributeDropout:
         """
         Fit the transformer using X (placeholder).
 
@@ -72,7 +73,7 @@ class AttributeDropout(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : pd.DataFrame of shape (n_samples, n_features)
-            Input data, of which specified subsets are used to fit the transformers.
+            Input data to be transformed.
         
         Returns
         -------

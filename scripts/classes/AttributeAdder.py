@@ -1,3 +1,4 @@
+from __future__ import annotations
 import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -43,7 +44,7 @@ class AttributeAdder(BaseEstimator, TransformerMixin):
     ])
     """
 
-    def __init__(self, attribs_in: List[str], attribs_out: List[str], func: Callable):
+    def __init__(self, attribs_in: List[str], attribs_out: List[str], func: Callable) -> None:
         """
         Constructs all the necessary attributes for the custom transformer object.
 
@@ -69,7 +70,7 @@ class AttributeAdder(BaseEstimator, TransformerMixin):
         self.attribs_out = attribs_out
         self.func = func
     
-    def fit(self, X: pd.DataFrame , y=None):
+    def fit(self, X: pd.DataFrame , y=None) -> AttributeAdder:
         """
         Fit the transformer using X (placeholder).
 

@@ -12,7 +12,7 @@ class IMAPAllocationError(Exception):
     Try to catch exception when connection with an IMAP server is established and allocation of an email message takes place.
     """
 
-    def __init__(self, message: str = "Allocation of an email failed."):
+    def __init__(self, message: str = "Allocation of an email failed.") -> None:
         """
         Constructs all the necessary attributes for the custom Exception object.
 

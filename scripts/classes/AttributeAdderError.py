@@ -15,7 +15,7 @@ class AttributeAdderError(Exception):
     Exception is raised when a != b
     """
 
-    def __init__(self, message: str = "Dimensions of the input columns and attributes to add cannot differ one from another."):
+    def __init__(self, message: str = "Dimensions of the input columns and attributes to add cannot differ one from another.") -> None:
         """
         Constructs all the necessary attributes for the custom Exception object.
 

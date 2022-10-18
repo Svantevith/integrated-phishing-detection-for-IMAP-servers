@@ -1,3 +1,4 @@
+from __future__ import annotations
 import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -39,7 +40,7 @@ class TextAttribConcat(BaseEstimator, TransformerMixin):
         ])
     """
 
-    def __init__(self, attribs_in: List[str], attrib_out: str, sep: str = '\n'):
+    def __init__(self, attribs_in: List[str], attrib_out: str, sep: str = '\n') -> None:
         """
         Constructs all the necessary attributes for the custom transformer object.
 
@@ -57,7 +58,7 @@ class TextAttribConcat(BaseEstimator, TransformerMixin):
         self.attrib_out = attrib_out
         self.sep = sep
     
-    def fit(self, X , y=None):
+    def fit(self, X: pd.DataFrame , y=None) -> TextAttribConcat:
         """
         Fit the transformer using X (placeholder).
 
@@ -82,7 +83,7 @@ class TextAttribConcat(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : pd.DataFrame of shape (n_samples, n_features)
-            Input data, of which specified subsets are used to fit the transformers.
+            Input data to be transformed.
         
         Returns
         -------

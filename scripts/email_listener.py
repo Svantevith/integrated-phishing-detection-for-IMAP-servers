@@ -10,10 +10,11 @@ from dotenv import load_dotenv
 from classes.MboxParser import MboxParser
 from classes.IMAPAllocationError import IMAPAllocationError
 from preprocessing_pipelines import text_pipeline, features_pipeline
-from helper_functions import decode_mime_words, parse_uid
+from helper_functions import decode_mime_words, parse_uid, parse_mailboxes, preview_mailtree
 
 """
-Python file containing the email listener.
+Python file containing the email listener with an intelligent function to detect & move phishing messages to the Spam folder.
+Specifically designed for the Gmail IMAP server, using other service configurations might lead to unexpected issues.
 """
 
 # Disable info & warning messages for tensorflow
@@ -26,25 +27,24 @@ KNN_PATH = os.getenv("KNN_PATH")
 
 # Make this wrapped to have 'with'statement
 
-def email_listener(imap_server: str, email_address: str, email_password: str, mail_boxes: List[str] = [], phishy_threshold: float = 0.7) -> None:
+def email_listener(imap_server: str, email_address: str, email_password: str, mail_boxes: List[str] = [], spam_box: str = "", phishy_threshold: float = 0.7) -> None:
     """
-    Description
-        Iterate over unseen images in the specified mailboxes and output predictions for email fraudulence to the console.
+    Iterate over unseen messages in the specified mailboxes, output predictions for email fraudulence to the console and move infected messages to the spam folder.
     
-    Arguments
+    Parameters
+    ----------
         imap_server : str
             IMAP server (host)
         email_address : str
             Address for the email account
         email_password : str 
             Password for the email account
-        mail_boxes : List[str]
+        mail_boxes : List[str], optional
             List of mailboxes
-        phishy_threshold : float
-            If prediction probability for the phishy email is below that threshold, it is treated as safe
-    
-    Returns
-        Nothing
+        spam_box : str, optional
+            Mailbox holding spam messages. When empty (default), it is set to the very first folder containing 'spam' inside its name.
+        phishy_threshold : float, optional
+            If prediction probability for the phishy email is below that threshold, it is treated as safe. Default is 0.7
     """
 
     # Connect with server using SSL
@@ -52,33 +52,65 @@ def email_listener(imap_server: str, email_address: str, email_password: str, ma
         # Login using credentials
         imap.login(email_address, email_password)
         print(f"[🔑] Connection with the IMAP server established.")
+        
+        # List available mailboxes
+        mail_tree = parse_mailboxes(imap.list()[1])
 
-        # ===== USER CONSOLE INPUT ====
+        # ===== USER CONSOLE INPUT [MAILBOXES] ====
         if not mail_boxes:
             print("\nSelect folders to scan:")
-            mail_tree = [
-                mail_box.decode().split(' "/" ')[1].strip('"') for mail_box in imap.list()[1]
-            ]
-            for i, mail_box in enumerate(mail_tree, start=1):
-                print(f" {i}. {mail_box.split('/')[-1]}")
-
+            preview_mailtree(mail_tree)
             try:
+                input_prompt = "Separate indices with a single space:" 
                 indices = sorted(
-                    set(input("\nSeparate indices with a single space: ").split()),
+                    set(input(f"\n{input_prompt} ").split()),
                     key=str.lower,
                 )
                 if not indices:
-                    print("Empty input sequence")
+                    print("[⛔] Empty input sequence")
                     return
                 mail_boxes = [mail_tree[int(i) - 1] for i in indices]
-                print("\n")
             except IndexError:
-                print("Index pointing to non-existing folder")
+                print("[⛔] Index pointing to non-existing folder")
+                return
+            except ValueError:
+                print("[⛔] Invalid input index format")
+                return
+            finally:
+                print("=" * len(input_prompt))
+        
+        # ===== USER CONSOLE INPUT [SPAM BOX] ====
+        if not spam_box:
+            select_prompt = f"\nSelect folder where to move spam:"
+
+            # Define the spam folder (first folder that contains 'spam' in its name)
+            spam_default = next((mail_box for mail_box in mail_tree if 'spam' in mail_box.lower()), "")
+            if spam_default:
+                select_prompt = '. '.join([select_prompt[:-1], f"Leave blank to use {spam_default.split('/')[-1]} as default."])
+            
+            print(select_prompt)
+            preview_mailtree(mail_tree)
+
+            # USE WRAPPER TO WRAP IT!!!!!
+            try:
+                input_prompt = "Enter index of the mailbox:"
+                idx = input(f"\n{input_prompt} ")                
+                if idx:
+                    spam_box = mail_tree[int(idx) - 1] 
+                elif spam_default:
+                    spam_box = spam_default
+                else:
+                    print("[⛔] Empty input")
+                    return
+            except IndexError:
+                print("[⛔] Index pointing to non-existing folder")
                 return
             except ValueError:
                 print("Invalid input index format")
                 return
-
+            finally:
+                print("=" * len(input_prompt))
+        
         # ==== EMAIL SCANNING ====
         scanned_emails = []
 
@@ -152,16 +184,16 @@ def email_listener(imap_server: str, email_address: str, email_password: str, ma
 
         # Output predictions to the console
         console_out = " [{}] Message '{}' from {} in {} is {}. {}"
-        for idx, (msg_uid, msg_subject, msg_from, mail_box) in scanned_emails_df[['UID', 'Subject', 'From', 'Mailbox']].iterrows():
-            is_phishy = y_pred[idx]
+        for (msg_uid, msg_subject, msg_from, mail_box) in scanned_emails_df[['UID', 'Subject', 'From', 'Mailbox']].values:
+            is_phishy = True # y_pred[idx]
             tag, icon, action = 'safe', '✔️ ', ''
             # Move phishy message from the current mailbox to the '[Gmail]/Spam' mailbox
             if is_phishy:
                 imap.select(mail_box)
-                tag, icon, action = 'malicious', '❌ ', 'For security reasons, email was moved to the Spam folder.'
+                tag, icon, action = 'malicious', '❌ ', f'For security reasons, email was moved to {spam_box} folder.'
                 try:
                     # Copy email to Spam
-                    copy_status, _ = imap.uid('COPY', msg_uid, '[Gmail]/Spam')
+                    copy_status, _ = imap.uid('COPY', msg_uid, spam_box)
                     if copy_status != 'OK':
                         raise IMAPAllocationError
 
@@ -174,7 +206,7 @@ def email_listener(imap_server: str, email_address: str, email_password: str, ma
                     imap.expunge()
 
                 # Handle error in case of insuccessful message allocation
-                except IMAPAllocationError(message="Moving email to the Spam failed failed.") as err:
+                except IMAPAllocationError(message=f"Moving email to {spam_box} failed.") as err:
                     action = err
             
             # Print information to the user

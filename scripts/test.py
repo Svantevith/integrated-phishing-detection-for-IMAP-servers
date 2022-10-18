@@ -1,24 +1,8 @@
-import pandas as pd
-import numpy as np
+import tensorflow as tf
+from classes.LSTMClassifier import LSTMClassifier
 
-def enumerate_virus_scanned(virus_scanned: str) -> int:
-    # IT DOES NOT WORK!!!!
-    """
-    Function to enumerate the X-Virus-Scanned rows.
-
-    Parameters
-    ----------
-    virus_scanned : str
-        X-Virus-Scanned value.
-    
-    Returns
-    -------
-    i : int
-        1 if virus scanned is NaN, else 0.    
-    """
-    try:
-        return int(len(virus_scanned) > 0)
-    except TypeError:
-        return 0
-for val in [pd.NA, pd.NaT, np.nan, '', None, 'DUPA']:
-    print(enumerate_virus_scanned(val))
+lstm = LSTMClassifier()
+data = tf.data.Dataset.from_tensors(['sdsadsa', 'dsadsaas'])
+lstm.compute_vocabulary(data)
+res = lstm.call(tf.convert_to_tensor(['dsdsads']))
+print(type(res))
