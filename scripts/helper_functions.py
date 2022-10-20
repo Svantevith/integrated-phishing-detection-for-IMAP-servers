@@ -2,7 +2,8 @@ import os
 import re
 import mailbox
 import email.header
-from typing import Generator, List, Dict, Any
+import sys
+from typing import Generator, List, Dict, Any, Callable, Union
 from classes.MboxParser import MboxParser
 
 """
@@ -116,3 +117,99 @@ def preview_mailtree(mail_tree: List[str]) -> None:
     """
     for i, mail_box in enumerate(mail_tree, start=1):
         print(f" {i}. {mail_box.split('/')[-1]}")
+
+
+def console_prompt_exception_handling(select_prompt: str, input_prompt: str, mail_tree: List[str]) -> Any:
+    def decorator(func: Callable) -> Any:
+        def wrapper(*args, **kwargs) -> Any:
+            try:
+                print(f"\n{select_prompt}", end='\n')
+                preview_mailtree(mail_tree)
+                print(f"\n{input_prompt}", end=' ')
+                return func(*args, **kwargs)
+            except IndexError:
+                print("[⛔] Index pointing to non-existing folder")
+                sys.exit(0)
+            except ValueError:
+                print("[⛔] Invalid input index format")
+                sys.exit(0)
+            else:
+                print("=" * len(input_prompt))
+        return wrapper
+    return decorator
+
+def select_mailboxes(mail_tree: List[str]) -> Union[List[str], None]:
+    """
+    User prompt to select which mailboxes to scan for unseen emails.
+
+    Parameters
+    ----------
+    mail_tree : List[str]
+        List of mailboxes.
+    
+    Returns
+    -------
+    mailboxes : List[str] or None
+        List of selected mailboxes or None if empty (execution of the program is stopped then). 
+    """
+    select_prompt = "Select folders to scan:"
+    input_prompt = "Separate indices with a single space:"
+    @console_prompt_exception_handling(select_prompt, input_prompt, mail_tree)
+    def handle_input():
+        """
+        Inner function to handle user mailboxes selection.
+
+        Returns
+        -------
+        mailboxes : List[str] or None
+            List of selected mailboxes or None if empty (execution of the program is stopped then). 
+        """
+        indices = sorted(
+            set(input().split()),
+            key=str.lower,
+        )
+        if not indices:
+            print("[⛔] Empty input sequence")
+            sys.exit(0)
+        return [mail_tree[int(i) - 1] for i in indices]
+    return handle_input()
+
+def select_spam_folder(mail_tree: List[str]) -> Union[str, None]:
+    """
+    User prompt to select which mailbox to move phishing emails to.
+
+    Parameters
+    ----------
+    mail_tree : List[str]
+        List of mailboxes.
+    
+    Returns
+    -------
+    spam_folder : str
+        Name of the spam mailbox or None if empty (execution of the program is stopped then). 
+    """
+    select_prompt = "Select folder where to move spam:" 
+    spam_default = next((mail_box for mail_box in mail_tree if 'spam' in mail_box.lower()), "")
+    if spam_default:
+        select_prompt = '. '.join([select_prompt[:-1], f"Leave blank to use {spam_default.split('/')[-1]} as default."])
+    input_prompt = "Enter index of the mailbox:"
+    @console_prompt_exception_handling(select_prompt, input_prompt, mail_tree)
+    def handle_input():
+        """
+        Inner function to handle user spam box selection.
+
+        Returns
+        -------
+        spam_folder : str
+            Name of the spam mailbox or None if empty (execution of the program is stopped then).
+        """
+        idx = input()                
+        if idx:
+            spam_box = mail_tree[int(idx) - 1] 
+        elif spam_default:
+            spam_box = spam_default
+        else:
+            print("[⛔] Empty input")
+            sys.exit(0)
+        return spam_box
+    return handle_input()

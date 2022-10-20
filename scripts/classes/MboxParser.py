@@ -4,8 +4,8 @@ import bs4
 from email.message import Message
 import warnings
 from typing import Union, Dict, List, Tuple, Any, Generator
-from classes.PhishyMatcher import PhishyMatcher
-from classes.HTMLFinder import HTMLFinder
+from .PhishyMatcher import PhishyMatcher
+from .HTMLFinder import HTMLFinder
 
 warnings.filterwarnings("ignore", category=UserWarning, module="bs4")
 

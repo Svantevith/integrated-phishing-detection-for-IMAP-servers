@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from typing import List, Callable
-
 from .AttributeAdderError import AttributeAdderError
 
 class AttributeAdder(BaseEstimator, TransformerMixin): 

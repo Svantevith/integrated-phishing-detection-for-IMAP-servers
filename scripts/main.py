@@ -14,7 +14,7 @@ Usage
     a. If empty, user is prompted to select mailboxes via console.
 3. Define SPAM_BOX. 
     a. If empty, user is prompted to select spam folder via console.
-    b. If there exists a default spam folder, the first mailbox containing 'spam' in its name is used.
+    b. If there exists a default spam folder, the first mailbox containing 'spam' in its name can be used.
 4. Define PHISHY_THRESHOLD. All emails with phishing probability higher than the threshold are moved to SPAM_BOX.
 """
 
@@ -30,7 +30,7 @@ APP_PASSWORD = os.getenv("APP_PASSWORD")
 IMAP_SERVER = "imap.gmail.com"
 
 # Define mailboxes to search through
-MAIL_BOXES = [] # ["Inbox"]
+MAIL_BOXES = ["Inbox"]
 
 # Define the folder, where to move spam
 SPAM_BOX = "[Gmail]/Spam"
