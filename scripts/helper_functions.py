@@ -119,14 +119,59 @@ def preview_mailtree(mail_tree: List[str]) -> None:
         print(f" {i}. {mail_box.split('/')[-1]}")
 
 
-def console_prompt_exception_handling(select_prompt: str, input_prompt: str, mail_tree: List[str]) -> Any:
-    def decorator(func: Callable) -> Any:
+def console_prompt_exception_handling(select_prompt: str, input_prompt: str, mail_tree: List[str]) -> Callable:
+    """
+    Exception handling component for taking user input in the console.
+
+    Parameters
+    ----------
+    select_prompt : str
+        Instruction displayed when user is prompted to select from available mailboxes.
+    input_prompt : str
+        Instruction to the user how to select chosen option(s).
+    mail_tree : List[str]
+        List of mailbox names.
+    
+    Returns
+    -------
+    decorator : Callable
+        Function used to embed the inner wrapper and pass parameters
+    """
+    def decorator(func: Callable) -> Callable:
+        """
+        Inner wrapper passing the calling function to the parametrized wrapper.
+
+        Parameters
+        ----------
+        func : Callable
+            Function decorated with @console_prompt_exception_handling.
+        
+        Returns
+        -------
+        wrapper : Callable
+            Parametrized wrapper for the calling function.
+        """
         def wrapper(*args, **kwargs) -> Any:
+            """
+            Parametrized wrapper for the calling function.
+
+            Parameters
+            ----------
+            args : Any
+                Arguments propagated from the console_prompt_exception_handling body.
+            kwargs : Any
+                Keyword arguments propagated from the console_prompt_exception_handling body.
+            
+            Returns
+            -------
+            result : Any
+                Return result of the calling function or None if an exception is caught (execution of the program is stopped then).
+            """
             try:
                 print(f"\n{select_prompt}", end='\n')
                 preview_mailtree(mail_tree)
                 print(f"\n{input_prompt}", end=' ')
-                return func(*args, **kwargs)
+                result = func(*args, **kwargs)
             except IndexError:
                 print("[⛔] Index pointing to non-existing folder")
                 sys.exit(0)
@@ -135,6 +180,7 @@ def console_prompt_exception_handling(select_prompt: str, input_prompt: str, mai
                 sys.exit(0)
             else:
                 print("=" * len(input_prompt))
+                return result
         return wrapper
     return decorator
 
