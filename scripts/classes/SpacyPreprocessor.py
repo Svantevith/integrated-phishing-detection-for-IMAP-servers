@@ -16,17 +16,18 @@ class SpacyPreprocessor(BaseEstimator, TransformerMixin):
     ----------
     nlp : spacy.lang.en.English
         SpaCy trained pipeline supporting English language.
-    mode : str
-        Determine how to exclude tokens based on allowed characters
-            'all' yields all tokens
-            'alpha' yields only alphabetical tokens
-            'alnum' yields alphanumerical tokens 
-            'ascii' yields any ascii-compliant tokens
-            'non_num' yields everything except for number-like tokens
     min_length : int
         Tokens with length shorter than this value are excluded.
     keep_stop : bool
-        If true, stopwords are kept.
+        If true, stopwords are kept. Default is False.
+    keep_num_like: bool
+        Yield numeric-like tokens. Default is True.
+    alpha_only : bool
+        Yield alphabetical tokens only. Default is False.
+    alnum_only: bool
+        Yield alphanumerical tokens only. Default is False.
+    ascii_only : bool
+        Yield ascii-compliant tokens only. Default is False.
 
     Methods
     -------
@@ -47,32 +48,36 @@ class SpacyPreprocessor(BaseEstimator, TransformerMixin):
     -----
     Add either as a step in sklearn.pipe.Pipeline, or as a transformer in sklearn.compose.ColumnTransformer.
     """
-    def __init__(self, mode: str = 'all', min_length: int = 0, keep_stop: bool = False) -> None:
+    def __init__(self, min_length: int = 0, keep_stop: bool = False, keep_num_like: bool = True, alpha_only: bool = False, alnum_only: bool = False, ascii_only: bool = False) -> None:
         """
         Constructs all the necessary attributes for the custom transformer object.
 
         Parameters
         ----------
-        mode : str, optional
-            Determine how to exclude tokens based on allowed characters
-                'all' yields all tokens (Default)
-                'alpha' yields only alphabetical tokens
-                'alnum' yields alphanumerical tokens 
-                'ascii' yields any ascii-compliant tokens
-                'non_num' yields everything except for number-like tokens
         min_length : int, optional
             Tokens with length shorter than this value are excluded. Default is 0.
         keep_stop : bool, optional
             If true, stopwords are kept. By default (False) stopwords are removed.
+        keep_num_like: bool
+            Yield numeric-like tokens. Default is True.
+        alpha_only : bool
+            Yield alphabetical tokens only. Default is False.
+        alnum_only: bool
+            Yield alphanumerical tokens only. Default is False.
+        ascii_only : bool
+            Yield ascii-compliant tokens only. Default is False.
         """
         super(SpacyPreprocessor, self).__init__()
         self.nlp = spacy.load(
             name='en_core_web_sm', 
             disable=["parser", "ner"]
         )
-        self.mode = mode
         self.min_length = min_length
         self.keep_stop = keep_stop
+        self.keep_num_like = keep_num_like
+        self.alpha_only = alpha_only
+        self.alnum_only = alnum_only
+        self.ascii_only = ascii_only
 
 
     def fit(self, X: pd.DataFrame, y=None) -> SpacyPreprocessor:
@@ -151,24 +156,24 @@ class SpacyPreprocessor(BaseEstimator, TransformerMixin):
             if not len(token.text) >= self.min_length:
                 continue
 
-            # Exclude any non-alphanumeric tokens
-            # Keep in mind that high frequency of tokens consisting of special characters might indicate fraudulent email
-            if self.mode == 'alnum' and not token.text.isalnum():
-                continue
-
             # Exclude non-ASCII tokens
             # Keep in mind that high frequency of non-ascii characters might indicate fraudulent email
-            if self.mode == 'ascii' and not token.is_ascii:
+            if self.ascii_only and not token.is_ascii:
                 continue 
+
+            # Exclude any non-alphanumeric tokens
+            # Keep in mind that high frequency of tokens consisting of special characters might indicate fraudulent email
+            if self.alnum_only and not token.text.isalnum():
+                continue
 
             # Exclude non-alphabetic tokens
             # Keep in mind that it limits the vocabulary to alphabetic tokens only, significantly affecting the spectrum of characters
-            if self.mode == 'alpha' and not token.is_alpha:
+            if self.alpha_only and not token.is_alpha:
               continue
             
             # Exclude numeric-like tokens
             # Keep in mind that high frequency of numeric-like tokens might indicate fraudulent email
-            if self.mode == 'non_num' and token.like_num:
+            if not self.keep_num_like and token.like_num:
                 continue
             
             # Exclude stopwords

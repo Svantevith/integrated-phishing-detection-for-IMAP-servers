@@ -136,6 +136,10 @@ def console_prompt_exception_handling(select_prompt: str, input_prompt: str, mai
     -------
     decorator : Callable
         Function used to embed the inner wrapper and pass parameters
+    
+    Usage
+    -----
+    Use as a decorator for functions taking input from the user in the console (select_mailboxes, select_spam_folder). 
     """
     def decorator(func: Callable) -> Callable:
         """

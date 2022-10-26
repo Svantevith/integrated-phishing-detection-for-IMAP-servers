@@ -15,23 +15,24 @@ from classes.NamedTransformer import NamedTransformer
 Python file containing pipelines for text & features preprocessing.
 """
 
-def text_pipeline(mode: str = 'all', min_length: int = 0, keep_stop: bool = False) -> Pipeline:
+def text_pipeline(min_length: int = 0, keep_stop: bool = False, keep_num_like: bool = True, alpha_only: bool = False, alnum_only: bool = False, ascii_only: bool = False) -> Pipeline:
     """
     Pipeline for text preprocessing (LSTM inputs).
     
     Parameters
     ----------
-    mode : str, optional
-        Determine how to exclude tokens based on allowed characters
-            'all' yields all tokens (Default)
-            'alpha' yields only alphabetical tokens
-            'alnum' yields alphanumerical tokens 
-            'ascii' yields any ascii-compliant tokens
-            'non_num' yields everything except for number-like tokens
     min_length : int, optional
         Tokens with length shorter than this value are excluded. Default is 0.
     keep_stop : bool, optional
         If true, stopwords are kept. By default (False) stopwords are removed.
+    keep_num_like: bool
+        Yield numeric-like tokens. Default is True.
+    alpha_only : bool
+        Yield alphabetical tokens only. Default is False.
+    alnum_only: bool
+        Yield alphanumerical tokens only. Default is False.
+    ascii_only : bool
+        Yield ascii-compliant tokens only. Default is False.
     
     Returns
     -------
@@ -39,7 +40,7 @@ def text_pipeline(mode: str = 'all', min_length: int = 0, keep_stop: bool = Fals
         Pipeline of transforms with a final estimator.
     """
     text_preprocessor = make_pipeline(
-        SpacyPreprocessor(mode, min_length, keep_stop), 
+        SpacyPreprocessor(min_length, keep_stop,  keep_num_like, alpha_only, alnum_only, ascii_only), 
         FunctionTransformer(pd.DataFrame.dropna)
     )
     pipe = Pipeline(steps=[

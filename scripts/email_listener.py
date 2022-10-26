@@ -117,7 +117,7 @@ def email_listener(imap_server: str, email_address: str, email_password: str, ma
         print("[⚙️ ] Models ready!\n")
         
         # Preprocess corpus
-        text_pipe = text_pipeline(mode='ascii', min_length=2)
+        text_pipe = text_pipeline(min_length=2, is_num_like=False)
         text_in = text_pipe.fit_transform(scanned_emails_df[['Subject', 'Raw Message']])
 
         # Preprocess features
