@@ -19,8 +19,8 @@
 ## Features
 List the ready features here:
 - Email listener connecting to any IMAP server (specifically designed for Gmail, might cause issues on different services).
-- LSTM model classifying email message content as a potential phishing attempt
-- Ensemble model (soft voting) classifying email message characteristics as a potential phishing attempt
+- LSTM model classifying email message content as a potential phishing attempt (98.7% accuracy on test data)
+- Ensemble model (soft voting) classifying email message characteristics as a potential phishing attempt (98.8% accuracy on test data)
 - Automatic email allocation to the spam folder
 
 ## Setup
