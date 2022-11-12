@@ -30,8 +30,6 @@ class MboxParser(PhishyMatcher, HTMLFinder):
         Generator yielding each message separate from the payload.
     _extract_email_data(msg)
         Extract email data from the email message. 
-    _get_html_text(html)
-        Get text from the HTML code.
 
     Usage
     -----
@@ -62,7 +60,7 @@ class MboxParser(PhishyMatcher, HTMLFinder):
             raise TypeError('Variable must be type mailbox.mboxMessage')
         super(PhishyMatcher, self).__init__()
         super(HTMLFinder, self).__init__()
-        self.keys = ['Message-ID', 'Date', 'From', 'To', 'Subject', 'Content-Length', 'X-Virus-Scanned', 'X-Priority']
+        self.keys = ['Message-ID', 'Date', 'From', 'To', 'Subject', 'Content-Length', 'X-Virus-Scanned', 'X-Priority', 'X-Spam-Score']
         self.email_data = email_data
 
     @property
@@ -76,7 +74,7 @@ class MboxParser(PhishyMatcher, HTMLFinder):
             Dictionary, providing keyed-access to email message attributes.
         """
         parsed_data = {
-            **{k: self.email_data.get(k, '') for k in self.keys},
+            **{k: self.email_data.get(k, None) for k in self.keys},
             'Attached Files': [],
             'Attachments': 0,
             'URL Links': [],
@@ -167,7 +165,7 @@ class MboxParser(PhishyMatcher, HTMLFinder):
                     extract_attributes(is_html=True)
 
                     if not is_plain:
-                        msg_text = self._get_html_text(raw_msg)
+                        msg_text = self.get_html_text(raw_msg)
                         parsed_data['Extracted Text'] = msg_text if msg_text else raw_msg
                     
                     is_parsed = True 
@@ -258,23 +256,3 @@ class MboxParser(PhishyMatcher, HTMLFinder):
         else:
             msg_text = ''
         return (content_type, encoding, disposition, filename, msg_text)
-
-    @staticmethod
-    def _get_html_text(html: str) -> str:
-        """
-        Get text from the HTML code.
-
-        Parameters
-        ----------
-        html : str
-            String containing HTML snippet.
-        
-        Returns
-        -------
-        text : str
-            Text parsed from the HTML body.
-        """
-        try:
-            return bs4.BeautifulSoup(html, 'lxml').body.get_text(' ', strip=True)
-        except AttributeError:  # message content is empty
-            return ''

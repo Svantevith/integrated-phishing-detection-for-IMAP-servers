@@ -24,6 +24,8 @@ class PhishyMatcher:
         Find URL links within the provided text.
     extract_URLs_from_HTML(html)
         Extract URLs from the HTML code.
+    get_html_text(html)
+        Get text from the HTML code.
     clean_html(html)
         Remove any '3D' attribute prefix from the HTML code.
     clean_text(text)
@@ -138,11 +140,31 @@ class PhishyMatcher:
             if x:
                 for (attr, url) in x:
                     url = self.clean_html(url)
-                    if attr == 'href' or re.match(self.URL_regex, url):
+                    if attr == 'href' and re.match(self.URL_regex, url):
                         urls.append(url)
 
         return urls
 
+    @staticmethod
+    def get_html_text(html: str) -> str:
+        """
+        Get text from the HTML code.
+
+        Parameters
+        ----------
+        html : str
+            String containing HTML snippet.
+        
+        Returns
+        -------
+        text : str
+            Text parsed from the HTML body.
+        """
+        try:
+            return bs4.BeautifulSoup(html, 'lxml').body.get_text(' ', strip=True)
+        except AttributeError:  # message content is empty
+            return ''
+    
     @staticmethod
     def clean_html(html: str) -> str:
         """

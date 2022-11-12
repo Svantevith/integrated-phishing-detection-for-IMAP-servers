@@ -1,8 +1,10 @@
 import re
+import numpy as np
 import pandas as pd
+import ast
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.compose import make_column_transformer
-from sklearn.preprocessing import FunctionTransformer, MinMaxScaler
+from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from typing import Callable, List, Union
 from functools import wraps
 from classes.SpacyPreprocessor import SpacyPreprocessor
@@ -25,31 +27,31 @@ def text_pipeline(min_length: int = 0, keep_stop: bool = False, keep_num_like: b
         Tokens with length shorter than this value are excluded. Default is 0.
     keep_stop : bool, optional
         If true, stopwords are kept. By default (False) stopwords are removed.
-    keep_num_like: bool
+    keep_num_like: bool, optional
         Yield numeric-like tokens. Default is True.
-    alpha_only : bool
+    alpha_only : bool, optional
         Yield alphabetical tokens only. Default is False.
-    alnum_only: bool
+    alnum_only: bool, optional
         Yield alphanumerical tokens only. Default is False.
-    ascii_only : bool
+    ascii_only : bool, optional
         Yield ascii-compliant tokens only. Default is False.
-    
+
     Returns
     -------
     pipe : sklearn.pipeline.Pipeline
         Pipeline of transforms with a final estimator.
     """
     text_preprocessor = make_pipeline(
-        SpacyPreprocessor(min_length, keep_stop,  keep_num_like, alpha_only, alnum_only, ascii_only), 
-        FunctionTransformer(pd.DataFrame.dropna)
+        SpacyPreprocessor(min_length, keep_stop,  keep_num_like, alpha_only, alnum_only, ascii_only)
     )
     pipe = Pipeline(steps=[
         ('text_concat', TextAttribConcat(attribs_in=['Subject', 'Raw Message'], attrib_out='Email Content', sep='\n')),
-        ('text_preprocess', make_column_transformer((text_preprocessor, ['Email Content'])))
+        ('text_preprocess', make_column_transformer(
+            (text_preprocessor, ['Email Content'])))
     ])
     return pipe
 
-def features_pipeline(exclude: List[str] = [], features_out: bool = False) -> Union[Pipeline, List[str]]:
+def features_pipeline(exclude: List[str] = [], normalize: bool = True, features_out: bool = False) -> Union[Pipeline, List[str]]:
     """
     Pipeline for features preprocessing (KNN inputs).
     
@@ -57,6 +59,8 @@ def features_pipeline(exclude: List[str] = [], features_out: bool = False) -> Un
     ----------
     exclude : List[str], optional
         List of features to exclude. Default is an empty list.
+    normalize : bool, optional
+        If true (default), output valeus are normalized.
     features_out : bool, optional
         If true, output columns are returned. Default is False.
 
@@ -67,8 +71,11 @@ def features_pipeline(exclude: List[str] = [], features_out: bool = False) -> Un
     features : List[str], optional
         List of output features. Only returned if features_out is True.
     """
-    # Add 'Message Length' attribute based on the 'Raw Message' column
-    attrib_adder = AttributeAdder(attribs_in=['Raw Message'], attribs_out=['Message Length'], func=get_message_length)
+    # Add new attributes based on the existing ones
+    attrib_adder = make_pipeline(
+        AttributeAdder(attribs_in=['Raw Message'], attribs_out=['Message Length'], func=get_message_length),
+        AttributeAdder(attribs_in=['URL Links'], attribs_out=['URL Secured Ratio', 'URL Unicode Ratio', 'URL Avg Length', 'URL Avg Levels'], func=get_url_characteristics)
+    )
     
     # Transform selected columns
     preprocessor = NamedTransformer(transformers=[
@@ -76,7 +83,7 @@ def features_pipeline(exclude: List[str] = [], features_out: bool = False) -> Un
         ('priority', enumerate_priority, ['X-Priority']),
         ('encoding', enumerate_encoding, ['Encoding']),
         ('flags', enumerate_bool, ['Is HTML', 'Is JavaScript', 'Is CSS']),
-        ('select', 'passthrough', ['Attachments', 'URLs', 'IPs', 'Images', 'Message Length'])
+        ('select', 'passthrough', ['Attachments', 'URLs', 'IPs', 'Images', 'Message Length', 'URL Secured Ratio', 'URL Unicode Ratio', 'URL Avg Length', 'URL Avg Levels'])
     ])
 
     # Drop selected columns
@@ -87,7 +94,7 @@ def features_pipeline(exclude: List[str] = [], features_out: bool = False) -> Un
         ('attrib_adder', attrib_adder),
         ('preprocessor', preprocessor),
         ('attrib_dropout', attrib_dropout),
-        ('scaler', MinMaxScaler())
+        ('scaler', StandardScaler() if normalize else None)
     ])
 
     # Get features out
@@ -115,6 +122,39 @@ def get_message_length(text: str) -> int:
         Text length.
     """
     return len(str(text))
+
+def get_url_characteristics(url_links: pd.Series) -> List[float]:
+    """
+    Extract intrinsic characteristics from list of URLs.
+
+    Parameters
+    ----------
+    url_links : pd.Series
+        Series containing a list or list-like string of URLs.
+
+    Returns
+    -------
+    attribs : List[float]
+        List of floating point numbers defining the security ratio, unicode ratio, average length and average number of levels in URLs embedded in an email message. 
+    """
+    def is_unicode(s: str):
+        try:
+            s.encode('ascii', 'strict')
+            return True
+        except UnicodeError:
+            return False
+    
+    if isinstance(url_links[0], str):
+        url_list = ast.literal_eval(url_links[0])
+    else:
+        url_list = url_links[0]
+    secure_ratio, unicode_ratio, avg_length, avg_n_levels = 1., 1., .0, .0
+    if url_list:
+        secure_ratio = sum([int(s.lower().startswith('https')) for s in url_list]) / len(url_list)
+        unicode_ratio = sum([int(is_unicode(s)) for s in url_list]) / len(url_list)
+        avg_length = np.mean([len(s) for s in url_list])
+        avg_n_levels = np.mean([len(s[s.find('://') + 3:].split('/')) for s in url_list])
+    return [secure_ratio, unicode_ratio, avg_length, avg_n_levels]
 
 def transformer_wrapper(func: Callable) -> FunctionTransformer:
     """
@@ -198,6 +238,7 @@ def enumerate_virus_scanned(virus_scanned: str) -> int:
 def enumerate_priority(priority: str) -> int:
     """
     Function to enumerate X-Priority rows.
+    Values: 1 (Highest), 2 (High), 3 (Normal), 4 (Low), 5 (Lowest). 3 (Normal) is default if the field is omitted. 0 is set if empty.
 
     Parameters
     ----------

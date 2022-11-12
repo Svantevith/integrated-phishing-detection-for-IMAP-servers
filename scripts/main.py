@@ -30,10 +30,10 @@ APP_PASSWORD = os.getenv("APP_PASSWORD")
 IMAP_SERVER = "imap.gmail.com"
 
 # Define mailboxes to search through
-MAIL_BOXES = [] # ["Inbox"]
+MAIL_BOXES = ["Inbox"]
 
 # Define the folder, where to move spam
-SPAM_BOX = "" # "[Gmail]/Spam"
+SPAM_BOX = "[Gmail]/Spam"
 
 # Define probability threshold for malicious tag
 PHISHY_THRESHOLD = 0.7

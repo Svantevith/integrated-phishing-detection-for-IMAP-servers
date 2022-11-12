@@ -60,7 +60,7 @@ class NamedTransformer(ColumnTransformer):
         df : pd.DataFrame
             Coverted pandas DataFrame.
         """
-        return pd.DataFrame(data, columns=self.features_in)
+        return pd.DataFrame(data, columns=self.features_in).convert_dtypes()
     
     def fit(self, X: np.ndarray, y = None) -> NamedTransformer:
         """

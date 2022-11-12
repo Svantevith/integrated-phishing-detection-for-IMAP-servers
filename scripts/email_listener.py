@@ -1,32 +1,17 @@
-import os
 import mailbox
 import imaplib
-import joblib
 import pandas as pd
-import numpy as np
-import tensorflow as tf
 from typing import List
-from dotenv import load_dotenv
 from classes.MboxParser import MboxParser
 from classes.IMAPAllocationError import IMAPAllocationError
-from preprocessing_pipelines import text_pipeline, features_pipeline
 from helper_functions import decode_mime_words, parse_uid, parse_mailboxes
 from helper_functions import select_mailboxes, select_spam_folder
+from make_predictions import make_predictions
 
 """
 Python file containing the email listener with an intelligent function to detect & move phishing messages to the Spam folder.
 Specifically designed for the Gmail IMAP server, using other service configurations might lead to unexpected issues.
 """
-
-# Disable info & warning messages for tensorflow
-tf.get_logger().setLevel('ERROR')
-
-# Define paths to models
-load_dotenv()
-LSTM_PATH = os.getenv("LSTM_PATH")
-KNN_PATH = os.getenv("KNN_PATH")
-
-# Make this wrapped to have 'with'statement
 
 def email_listener(imap_server: str, email_address: str, email_password: str, mail_boxes: List[str] = [], spam_box: str = "", phishy_threshold: float = 0.7) -> None:
     """
@@ -52,7 +37,7 @@ def email_listener(imap_server: str, email_address: str, email_password: str, ma
     with imaplib.IMAP4_SSL(imap_server) as imap:
         # Login using credentials
         imap.login(email_address, email_password)
-        print(f"[🔑] Connection with the IMAP server established.")
+        print(f"[🔑] Connection with the IMAP server established.\n")
         
         # List available mailboxes
         mail_tree = parse_mailboxes(imap.list()[1])
@@ -110,41 +95,21 @@ def email_listener(imap_server: str, email_address: str, email_password: str, ma
         # Convert list of scanned email data to a DataFrame
         scanned_emails_df = pd.DataFrame.from_dict(scanned_emails)
 
-        # Load models
-        print("\n[⌛] Loading models...")
-        lstm = tf.keras.models.load_model(LSTM_PATH)
-        knn = joblib.load(KNN_PATH)
-        print("[⚙️ ] Models ready!\n")
-        
-        # Preprocess corpus
-        text_pipe = text_pipeline(min_length=2, is_num_like=False)
-        text_in = text_pipe.fit_transform(scanned_emails_df[['Subject', 'Raw Message']])
-
-        # Preprocess features
-        features_pipe = features_pipeline(exclude=['X-Virus-Scanned', 'Is JavaScript', 'Attachments'])
-        features_in = features_pipe.fit_transform(scanned_emails_df)
-
-        # Make predictions using LSTM
-        y_pred_lstm = lstm.predict(text_in, verbose=0)
-
-        # Make predictions using KNN
-        y_pred_knn = knn.predict_proba(features_in)
-
-        # Use bagging to combine predictions
-        y_pred_proba = np.mean([y_pred_lstm, y_pred_knn], axis=0)
-        
-        # Set appropriate label based on the defined probability threshold
-        y_pred = [int(p[1] >= phishy_threshold) for p in y_pred_proba]
+        # Make predictions
+        y_pred_proba = make_predictions(scanned_emails_df)
 
         # Output predictions to the console
-        console_out = " [{}] Message '{}' from {} in {} is {}. {}"
+        console_out = " {} [{:6.2f} %] Message '{}' from {} in {} is {}. {}"
         for idx, (msg_uid, msg_subject, msg_from, mail_box) in scanned_emails_df[['UID', 'Subject', 'From', 'Mailbox']].iterrows():
-            is_phishy = y_pred[idx]
+            # Set appropriate label based on the defined probability threshold
+            phishy_proba = y_pred_proba[idx][1]
+            is_phishy = int(phishy_proba >= phishy_threshold)
+            
             tag, icon, action = 'safe', '✔️ ', ''
             # Move phishy message from the current mailbox to the '[Gmail]/Spam' mailbox
             if is_phishy:
                 imap.select(mail_box)
-                tag, icon, action = 'malicious', '❌ ', f'For security reasons, email was moved to {spam_box} folder.'
+                tag, icon, action = 'malicious', '❌', f'For security reasons, email was moved to {spam_box} folder.'
                 try:
                     # Copy email to Spam
                     copy_status, _ = imap.uid('COPY', msg_uid, spam_box)
@@ -164,4 +129,4 @@ def email_listener(imap_server: str, email_address: str, email_password: str, ma
                     action = err
             
             # Print information to the user
-            print(console_out.format(icon, decode_mime_words(msg_subject), msg_from, mail_box, tag, action))
+            print(console_out.format(icon, phishy_proba * 100, decode_mime_words(msg_subject), msg_from, mail_box, tag, action))

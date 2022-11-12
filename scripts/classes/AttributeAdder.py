@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from typing import List, Callable
-from .AttributeAdderError import AttributeAdderError
 
 class AttributeAdder(BaseEstimator, TransformerMixin): 
     """
@@ -55,14 +54,7 @@ class AttributeAdder(BaseEstimator, TransformerMixin):
             List of features added to the output matrix.
         func : Callable
             Function applied to transform input features.
-        
-        Raises
-        ------
-        AttributeAdderError
-            An exception is raised when the number of columns in the transformed input (attribs_in) is not equal to the number of attributes added (attribs_out). 
         """
-        if len(attribs_in) != len(attribs_out):
-            raise AttributeAdderError
 
         super(AttributeAdder, self).__init__()
         self.attribs_in = attribs_in
@@ -106,7 +98,7 @@ class AttributeAdder(BaseEstimator, TransformerMixin):
         KeyError
             If any of the input labels (attribs_in) is not found in the columns.
         """
-        X_ = X[self.attribs_in].applymap(self.func)
+        X_ = X[self.attribs_in].apply(self.func, axis=1, result_type="expand")
         return pd.DataFrame(
             data=np.c_[X, X_],
             columns=[*X.columns, *self.attribs_out]

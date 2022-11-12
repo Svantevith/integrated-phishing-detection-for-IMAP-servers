@@ -46,8 +46,17 @@ def parse_data_from_mbox(
     
     Usage
     -----
-    Efficiently create a DataFrame from the output Generator of dictionaries.    
+    Efficiently create a DataFrame from the output Generator of dictionaries. 
+
+    Raises
+    ------
+    FileNotFoundError
+        File must be an existing .mbox file
+
     """
+    if not (mbox_path.lower().endswith('.mbox') and os.path.exists(mbox_path)):
+        raise FileNotFoundError(f'Cannot find mbox file {mbox_path}')
+
     mbox = mailbox.mbox(mbox_path)
     for email_obj in mbox:
         message_obj = MboxParser(email_obj)
@@ -172,7 +181,7 @@ def console_prompt_exception_handling(select_prompt: str, input_prompt: str, mai
                 Return result of the calling function or None if an exception is caught (execution of the program is stopped then).
             """
             try:
-                print(f"\n{select_prompt}", end='\n')
+                print(f"{select_prompt}", end='\n')
                 preview_mailtree(mail_tree)
                 print(f"\n{input_prompt}", end=' ')
                 result = func(*args, **kwargs)
@@ -183,7 +192,7 @@ def console_prompt_exception_handling(select_prompt: str, input_prompt: str, mai
                 print("[⛔] Invalid input index format")
                 sys.exit(0)
             else:
-                print("=" * len(input_prompt))
+                print("=" * len(input_prompt) + "\n")
                 return result
         return wrapper
     return decorator
