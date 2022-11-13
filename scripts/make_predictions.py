@@ -32,17 +32,17 @@ def make_predictions(dataset: pd.DataFrame) -> List[int]:
     """
     # Preprocess corpus
     text_pipe = text_pipeline(min_length=3, keep_num_like=False)
-    text_in = text_pipe.fit_transform(dataset[['Subject', 'Raw Message']])
+    text_in = text_pipe.fit_transform(dataset[['Subject', 'Extracted Text']])
 
     # Preprocess features
-    features_pipe = features_pipeline(exclude=['X-Virus-Scanned', 'Is JavaScript', 'Attachments', 'Message Length', 'URL Unicode Ratio'])
+    features_pipe = features_pipeline(exclude=['X-Virus-Scanned', 'Spam Score', 'Is JavaScript', 'Attachments', 'Message Length', 'URL Unicode Ratio'])
     features_in = features_pipe.fit_transform(dataset)
 
     # Load models
     print("\n[⌛] Loading models...")
 
     # Make predictions using LSTM
-    empty_idx = dataset[(dataset[['Subject', 'Raw Message']].applymap(len) == 0).all(axis=1)].index
+    empty_idx = dataset[(dataset[['Subject', 'Extracted Text']].applymap(len) == 0).all(axis=1)].index
     ## Do not return predictions for empty input strings
     if len(empty_idx) == len(dataset):
         y_pred_lstm = np.full(shape=(len(dataset),), fill_value=np.nan)

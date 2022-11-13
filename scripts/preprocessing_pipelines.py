@@ -45,7 +45,7 @@ def text_pipeline(min_length: int = 0, keep_stop: bool = False, keep_num_like: b
         SpacyPreprocessor(min_length, keep_stop,  keep_num_like, alpha_only, alnum_only, ascii_only)
     )
     pipe = Pipeline(steps=[
-        ('text_concat', TextAttribConcat(attribs_in=['Subject', 'Raw Message'], attrib_out='Email Content', sep='\n')),
+        ('text_concat', TextAttribConcat(attribs_in=['Subject', 'Extracted Text'], attrib_out='Email Content', sep='\n')),
         ('text_preprocess', make_column_transformer(
             (text_preprocessor, ['Email Content'])))
     ])
@@ -73,7 +73,7 @@ def features_pipeline(exclude: List[str] = [], normalize: bool = True, features_
     """
     # Add new attributes based on the existing ones
     attrib_adder = make_pipeline(
-        AttributeAdder(attribs_in=['Raw Message'], attribs_out=['Message Length'], func=get_message_length),
+        AttributeAdder(attribs_in=['Extracted Text'], attribs_out=['Message Length'], func=get_message_length),
         AttributeAdder(attribs_in=['URL Links'], attribs_out=['URL Secured Ratio', 'URL Unicode Ratio', 'URL Avg Length', 'URL Avg Levels'], func=get_url_characteristics)
     )
     
@@ -81,6 +81,7 @@ def features_pipeline(exclude: List[str] = [], normalize: bool = True, features_
     preprocessor = NamedTransformer(transformers=[
         ('virus_scanned', enumerate_virus_scanned, ['X-Virus-Scanned']),
         ('priority', enumerate_priority, ['X-Priority']),
+        ('spam_score', impute_spam_score, ['Spam Score']),
         ('encoding', enumerate_encoding, ['Encoding']),
         ('flags', enumerate_bool, ['Is HTML', 'Is JavaScript', 'Is CSS']),
         ('select', 'passthrough', ['Attachments', 'URLs', 'IPs', 'Images', 'Message Length', 'URL Secured Ratio', 'URL Unicode Ratio', 'URL Avg Length', 'URL Avg Levels'])
@@ -213,6 +214,23 @@ def transformer_wrapper(func: Callable) -> FunctionTransformer:
         """
         return df.applymap(func, *args, **kwargs)
     return FunctionTransformer(wrapper)
+
+@transformer_wrapper
+def impute_spam_score(spam_score: float) -> float:
+    """
+    Function to impute Spam Score rows.
+
+    Parameters
+    ----------
+    spam_score : float
+        Spam Score value.
+    
+    Returns
+    -------
+    _score : float
+        Imputed Spam Score value.
+    """
+    return spam_score if not pd.isnull(spam_score) else 0.
 
 @transformer_wrapper
 def enumerate_virus_scanned(virus_scanned: str) -> int:

@@ -60,7 +60,7 @@ class MboxParser(PhishyMatcher, HTMLFinder):
             raise TypeError('Variable must be type mailbox.mboxMessage')
         super(PhishyMatcher, self).__init__()
         super(HTMLFinder, self).__init__()
-        self.keys = ['Message-ID', 'Date', 'From', 'To', 'Subject', 'Content-Length', 'X-Virus-Scanned', 'X-Priority', 'X-Spam-Score']
+        self.keys = ['Message-ID', 'Date', 'From', 'To', 'Subject', 'Content-Length', 'X-Virus-Scanned', 'X-Priority']
         self.email_data = email_data
 
     @property
@@ -75,6 +75,7 @@ class MboxParser(PhishyMatcher, HTMLFinder):
         """
         parsed_data = {
             **{k: self.email_data.get(k, None) for k in self.keys},
+            'Spam Score': None,
             'Attached Files': [],
             'Attachments': 0,
             'URL Links': [],
@@ -91,7 +92,21 @@ class MboxParser(PhishyMatcher, HTMLFinder):
             'Extracted Text': '',
         }
 
+        # Format message ID
         parsed_data['Message-ID'] = str(parsed_data['Message-ID']).strip('<>')
+
+        # Parse spam score from Spam Assassin or Barracuda Spam Firewall headers
+        for score_key in ['X-Spam-Score', 'X-Barracuda-Spam-Score']:
+            spam_score = self.email_data.get(score_key, '')
+            if spam_score:
+                try:
+                    spam_score_num = float(re.search(r'[\+\-]?\d+\.\d+', spam_score).group(0))
+                except TypeError:
+                    spam_score_num = None
+                finally:
+                    if spam_score_num:
+                        parsed_data['Spam Score'] = spam_score_num
+                        break
 
         def extract_attributes(is_html: bool = False) -> None:
             """
