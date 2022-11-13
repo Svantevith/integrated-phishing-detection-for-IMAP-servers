@@ -1,5 +1,5 @@
 # Integrated phishing(fraud?) detection for IMAP servers
-> Email listener, specifically designed for the Gmail IMAP server, automatically identifies incoming phishing emails and moves them to the spam folder. 
+> Email listener, specifically designed for the Gmail IMAP server, automatically identifies incoming phishing emails (98.5% accuracy) and moves them to the selected spam folder. 
 
 ## Table of Contents
 * [General Information](#general-information)
@@ -17,11 +17,10 @@
 - Python 3
 
 ## Features
-List the ready features here:
-- Email listener connecting to any IMAP server (specifically designed for Gmail, might cause issues on different services).
-- LSTM model classifying email message content as a potential phishing attempt (98.7% accuracy on test data)
-- Ensemble model (soft voting) classifying email message characteristics as a potential phishing attempt (98.8% accuracy on test data)
-- Automatic email allocation to the spam folder
+- Email listener connecting to any IMAP server (specifically designed for Gmail, might cause issues on different services) searching for unseen emails in the selected mailboxes.
+- LSTM model classifying email message content as a potential phishing attempt (98.74% accuracy on test data).
+- Ensemble model (soft voting) classifying email message characteristics as a potential phishing attempt (98.82% accuracy on test data).
+- Automatically allocating malicious emails to the selected spam folder.
 
 ## Setup
 Define required environmental & global variables:

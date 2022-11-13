@@ -119,16 +119,10 @@ class MboxParser(PhishyMatcher, HTMLFinder):
         # parsed_data['Payload'] = payload
 
         # Flag if there is plain text in the payload
-        is_plain = any(
-            data[0] == 'text/plain' and data[-1]
-            for data in payload
-        )
+        is_plain = any(data[0] == 'text/plain' for data in payload)
 
         # Flag if there is formatted text in the payload
-        is_formatted = any(
-            data[0] in ['text/html', 'NA'] and data[-1]
-            for data in payload
-        )
+        is_formatted = any(data[0] in ['text/html', 'NA'] for data in payload)
 
         # Flag if formatted text was parsed already
         is_parsed = False
@@ -162,7 +156,7 @@ class MboxParser(PhishyMatcher, HTMLFinder):
                     parsed_data['Images Embedded'] = self.images
                     parsed_data['Images'] = len(self.images) 
 
-                    extract_attributes(is_html=True)
+                    extract_attributes(is_html=self.contains_html)
 
                     if not is_plain:
                         msg_text = self.get_html_text(raw_msg)

@@ -37,7 +37,7 @@ def email_listener(imap_server: str, email_address: str, email_password: str, ma
     with imaplib.IMAP4_SSL(imap_server) as imap:
         # Login using credentials
         imap.login(email_address, email_password)
-        print(f"[🔑] Connection with the IMAP server established.\n")
+        print(f"[🔑] Connection with the IMAP server {imap_server} established.\n")
         
         # List available mailboxes
         mail_tree = parse_mailboxes(imap.list()[1])
@@ -129,4 +129,4 @@ def email_listener(imap_server: str, email_address: str, email_password: str, ma
                     action = err
             
             # Print information to the user
-            print(console_out.format(icon, phishy_proba * 100, decode_mime_words(msg_subject), msg_from, mail_box, tag, action))
+            print(console_out.format(icon, phishy_proba * 100, decode_mime_words(msg_subject) if msg_subject else 'No subject', msg_from, mail_box, tag, action))
