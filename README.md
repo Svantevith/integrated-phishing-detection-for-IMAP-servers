@@ -7,6 +7,7 @@
 * [Features](#features)
 * [Setup](#setup)
 * [Usage](#usage)
+* [Room for Improvement](#room-for-improvement)
 * [Contact](#contact)
 
 ## General Information
@@ -18,6 +19,8 @@
 
 ## Features
 - Email listener connecting to any IMAP server (specifically designed for Gmail, might cause issues on different services) searching for unseen emails in the selected mailboxes.
+- Reusable implementation to parse .mbox files and email message objects.
+- Custom preprocessing pipelines for email feature engineering (text content & message attributes).
 - LSTM model classifying email message content as a potential phishing attempt (98.74% accuracy on test data).
 - Ensemble model (soft voting) classifying email message characteristics as a potential phishing attempt (98.82% accuracy on test data).
 - Automatically allocating malicious emails to the selected spam folder.
@@ -30,6 +33,13 @@ Define required environmental & global variables:
 ## Usage
 1. Run ./scripts/main.py
 2. If MAIL_BOXES or SPAM_BOX are empty, user is prompted to select mailbox(es) from the console.
+
+## Room for Improvement
+To accomplish this project, two datasets in the .mbox format were for training. 
+* The first one was a phishing email corpus, where every email is a reported and verified phishing attempt: https://www.kaggle.com/datasets/oakent/phishing-emails-mbox
+* The second dataset was an email corpus containing legitimate messages from the Enron company. I took the advantage of already converted Enron mbox dataset from @degoocampoh: https://github.com/diegoocampoh/MachineLearningPhishing/blob/master/code/resources/emails-enron.mbox
+For further improvement of the algorithms, more datasets from the online archive https://monkey.org/~jose/phishing/ can be used to train for a greater extent. 
+Furthermore, additional production-environment data should be fed to the algorithms, in order to make this project highly applicable and accurate in real life.
 
 ## Contact
 Created by [@Svantevith] - feel free to contact me!
